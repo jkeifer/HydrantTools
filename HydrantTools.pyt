@@ -1,32 +1,23 @@
-###################################################################################
-#
-# This software is distributed under the The MIT License (MIT)
-#
-# Copyright (c) 2014 Jarrett Keifer
-#
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in all
-# copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-#
-###################################################################################
+"""
+This software is designed for use with ArcGIS as a toolbox tool. Simply point catalog to this
+file, or add this file to your toolbox. Use the tools in the toolbox in order as they are labeled.
+
+See the documentation at github.com/jkeifer for more information.
+
+This software is distributed with an MIT license.
+"""
 
 import os
 import arcpy
 from arcpy import env
+
+__author__ = "Jarrett A. Keifer"
+__copyright__ = "Copyright 2014 Jarrett A. Keifer"
+__credits__ = ["Jarrett A. Keifer", "Geoffrey Duh", "James Kivley", "Tualatin Valley Water District"]
+__license__ = "MIT"
+__version__ = "0.9"
+__email__ = "jkeifer0@gmail.com"
+__status__ = "beta"
 
 
 class Toolbox(object):
