@@ -521,34 +521,6 @@ class CrackTaxlotPolygons(object):
         param3.parameterDependencies = [param0.name]
         params.append(param3)
 
-        #Fifth parameter
-        param4 = arcpy.Parameter(
-            displayName="Tax Lot Identifer Field",
-            name="tlid",
-            datatype="Field",
-            parameterType="Required",
-            direction="Input")
-
-        #Dependancy to get fields from input FC
-        param4.parameterDependencies = [param0.name]
-        
-        params.append(param4)
-
-        #Sixth parameter
-        param5 = arcpy.Parameter(
-            displayName="Tax Lot Street Address Field(s) to Retain",
-            name="fields",
-            datatype="GPValueTable",
-            parameterType="Optional",
-            direction="Input")
-
-        param5.columns = [["Field", "Field"]]
-
-        #Dependancy to get fields from input FC
-        param5.parameterDependencies = [param0.name]
-        
-        params.append(param5)
-
         return params
 
     def isLicensed(self):
@@ -581,8 +553,6 @@ class CrackTaxlotPolygons(object):
         rightofwaypoly = parameters[1].valueAsText
         allocationpoly = parameters[2].valueAsText
         outFC = parameters[3].valueAsText
-        tlid = parameters[4].valueAsText
-        fieldsToKeep = parameters[5].valueAsText
 
         env.workspace = "in_memory"
 
