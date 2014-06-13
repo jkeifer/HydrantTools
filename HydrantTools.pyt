@@ -190,11 +190,14 @@ class VoronoiAllocationForLines(object):
 
         #Convert field objects to strings of their names
         fieldsToKeep = []
-        for f in fieldObjects:
-            fieldsToKeep.append([f[0], "FIRST"])
-            arcpy.AddMessage(f[0])
-        
-        arcpy.AddMessage("The fields to keep are: {0}.".format(fieldsToKeep))
+        if not fieldObjects is None:
+            for f in fieldObjects:
+                fieldsToKeep.append([f[0], "FIRST"])
+                arcpy.AddMessage(f[0])
+            
+            arcpy.AddMessage("The fields to keep are: {0}.".format(fieldsToKeep))
+        else:
+            arcpy.AddMessage("No fields will be retained.")
 
         #Densify street lines
         arcpy.AddMessage("Densifying the street centerlines...")
