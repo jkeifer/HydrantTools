@@ -988,6 +988,7 @@ class FindUncoveredBuildings(object):
         taxlotLayer = arcpy.MakeFeatureLayer_management(taxlots, "ttaxlots", selection)
 
         #Join service areas with tax lot lines
+        #DO NOT write join1 to in_memory as it needs to be in the same workspace as the buildings for make query table
         join1temp = arcpy.SpatialJoin_analysis(taxlotLayer, serviceAreas, "in_memory/join1", "JOIN_ONE_TO_MANY")
         join1 = arcpy.CopyRows_management(join1temp, os.path.join(outputWorkspace, "join1"))
         arcpy.Delete_management(join1temp)
@@ -1001,6 +1002,7 @@ class FindUncoveredBuildings(object):
         #Join with buffers and select where buffer and service are of the same hydrant
         join3 = arcpy.SpatialJoin_analysis(join2, buffers, os.path.join("in_memory", "join3"), "JOIN_ONE_TO_MANY", "KEEP_ALL", "", "WITHIN")
         tJoin = arcpy.MakeFeatureLayer_management(join3, "tjoin3", "join1_FacilityID = " + bufferIDfieldname)
+        arcpy.Delete_management(join1) #Comment out to save join1
 
         #Select buildings from the buildings layer that are covered and delete
         buildingslayer = arcpy.MakeFeatureLayer_management(buildings, "tbuildings")
