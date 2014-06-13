@@ -544,9 +544,6 @@ class CrackTaxlotPolygons(object):
         """Modify the messages created by internal validation for each tool
         parameter.  This method is called after internal validation."""
 
-        if not parameters[5].value:
-            parameters[5].setWarningMessage("No tax lot attributes will be carried to final output!")
-
         return
 
     def execute(self, parameters, messages):
