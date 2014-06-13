@@ -71,7 +71,7 @@ class VoronoiAllocationForLines(object):
             direction="Input")
 
         #Dependancy to get default unit from input FC
-        param1.parameterDependencies = [param0.name]
+        #param1.parameterDependencies = [param0.name]
         param1.value = '5 Feet'
 
         params.append(param1)
@@ -103,7 +103,7 @@ class VoronoiAllocationForLines(object):
 
         #Fifth parameter -- Ask if the intermediate FC should be written to disk
         param4 = arcpy.Parameter(
-            displayName="Save Intermediate Files to Workspace",
+            displayName="Save Intermediate Files to Workspace [Currently Disabled]",
             name="writeToDisk",
             datatype="GPBoolean",
             parameterType="Required",
@@ -143,9 +143,9 @@ class VoronoiAllocationForLines(object):
         has been changed."""
 
         #Update units on density to match input FC linear units
-        if parameters[0].value:
-            if not parameters[1].altered:
-                parameters[1].value = "5 " + arcpy.Describe(arcpy.Describe(parameters[0].value).spatialReference).linearUnitName
+        # if parameters[0].value:
+        #     if not parameters[1].altered:
+        #         parameters[1].value = "5 " + arcpy.Describe(arcpy.Describe(parameters[0].value).spatialReference).linearUnitName
 
         #Update fields in field mapping to match input FC fields
         # if parameters[0].value:
