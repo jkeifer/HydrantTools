@@ -192,7 +192,7 @@ class VoronoiAllocationForLines(object):
         fieldsToKeep = []
         if not fieldObjects is None:
             for f in fieldObjects:
-                fieldsToKeep.append([f[0], "FIRST"])
+                fieldsToKeep.append(str([f[0]), "FIRST"])
                 arcpy.AddMessage(f[0])
             
             arcpy.AddMessage("The fields to keep are: {0}.".format(fieldsToKeep))
