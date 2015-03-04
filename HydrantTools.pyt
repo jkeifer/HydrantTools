@@ -5,19 +5,23 @@ file, or add this file to your toolbox. Use the tools in the toolbox in order as
 See the documentation at github.com/jkeifer for more information.
 
 This software is distributed with an MIT license.
+
+THIS SOFTWARE IS SUPPLIED AS-IS, WITH NO WARRANTY OR GARANTEE, EXPLICT OR IMPLICIT. THE AUTHORS
+OF THIS SOFTWARE ASSUME NO LIABILITY FROM IMPROPER USE OR OPERATION.
+
 """
 
 import os
 import arcpy
 from arcpy import env
 
-__author__ = "Jarrett A. Keifer"
+__author__    = "Jarrett A. Keifer"
 __copyright__ = "Copyright 2014 Jarrett A. Keifer"
-__credits__ = ["Jarrett A. Keifer", "Geoffrey Duh", "James Kivley", "Tualatin Valley Water District"]
-__license__ = "MIT"
-__version__ = "0.9"
-__email__ = "jkeifer0@gmail.com"
-__status__ = "beta"
+__credits__   = ["Jarrett A. Keifer", "Geoffrey Duh", "James Kivley", "Tualatin Valley Water District"]
+__license__   = "MIT"
+__version__   = "0.9.2"
+__email__     = "jkeifer0@gmail.com"
+__status__    = "beta"
 
 
 class Toolbox(object):
@@ -27,7 +31,7 @@ class Toolbox(object):
         self.label = "Hydrant Tools"
         self.alias = "hydrantTools"
 
-        # List of tool classes associated with this toolbox
+        # list of tool classes associated with this toolbox
         self.tools = [VoronoiAllocationForLines,
                       CleanUpTaxLots,
                       CreateRightOfWayPolygon,
@@ -47,10 +51,10 @@ class VoronoiAllocationForLines(object):
         self.canRunInBackground = True
 
     def getParameterInfo(self):
-        #Define parameter definitions
+        # define parameter definitions
         params = []
 
-        #First parameter
+        # first parameter
         param0 = arcpy.Parameter(
             displayName="Input Street Features",
             name="in_streets",
@@ -62,7 +66,7 @@ class VoronoiAllocationForLines(object):
 
         params.append(param0)
 
-        #Second parameter
+        # second parameter
         param1 = arcpy.Parameter(
             displayName="Density Level",
             name="density",
@@ -70,13 +74,13 @@ class VoronoiAllocationForLines(object):
             parameterType="Required",
             direction="Input")
 
-        #Dependancy to get default unit from input FC
+        # dependancy to get default unit from input FC
         #param1.parameterDependencies = [param0.name]
         param1.value = '5 Feet'
 
         params.append(param1)
 
-        #Third parameter
+        # third parameter
         param2 = arcpy.Parameter(
             displayName="Output Feature Class",
             name="out_fc",
@@ -86,7 +90,7 @@ class VoronoiAllocationForLines(object):
 
         params.append(param2)
 
-        #Fourth parameter
+        # fourth parameter
         param3 = arcpy.Parameter(
             displayName="Street Name Field(s) to Retain",
             name="fields",
@@ -96,12 +100,12 @@ class VoronoiAllocationForLines(object):
 
         param3.columns = [["Field", "Field"]]
 
-        #Dependancy to get fields from input FC
+        # dependancy to get fields from input FC
         param3.parameterDependencies = [param0.name]
         
         params.append(param3)
 
-        #Fifth parameter -- Ask if the intermediate FC should be written to disk
+        # fifth parameter -- ask if the intermediate FC should be written to disk
         param4 = arcpy.Parameter(
             displayName="Save Intermediate Files to Workspace [Currently Disabled]",
             name="writeToDisk",
@@ -112,7 +116,7 @@ class VoronoiAllocationForLines(object):
         param4.value = False
         params.append(param4)
 
-        #Sixth parameter -- Output workspace for intermediate files
+        # sixth parameter -- Output workspace for intermediate files
         param5 = arcpy.Parameter(
             displayName="Output Workspace for Intermediate Files",
             name="outWorkspace",
@@ -123,7 +127,7 @@ class VoronoiAllocationForLines(object):
 
         param5.value = ""
 
-        #Dependancy to be enabled via param4
+        # dependancy to be enabled via param4
         param5.parameterDependencies = [param4.name]
 
         params.append(param5)
@@ -145,7 +149,7 @@ class VoronoiAllocationForLines(object):
         #Update units on density to match input FC linear units
         # if parameters[0].value:
         #     if not parameters[1].altered:
-        #         parameters[1].value = "5 " + arcpy.Describe(arcpy.Describe(parameters[0].value).spatialReference).linearUnitName
+        #         parameters[1].value = "5 " + arcpy.Describe(parameters[0].value).spatialReference.linearUnitName
 
         #Update fields in field mapping to match input FC fields
         # if parameters[0].value:
@@ -173,44 +177,47 @@ class VoronoiAllocationForLines(object):
     def execute(self, parameters, messages):
         """The source code of the tool."""
         
-        #Get parameters
+        # get parameters
         inFC = parameters[0].valueAsText
         density = parameters[1].valueAsText
         outFC = parameters[2].valueAsText
         fieldObjects = parameters[3].value
 
-        #Set workspace for intermediate files
+        # set workspace for intermediate files
         if parameters[4].value:
             intermediateworkspace = "in_memory"  # Problem with this option; disabled for the moment
             #intermediateworkspace = parameters[5].valueAsText
         else:
             intermediateworkspace = "in_memory"
-
+        
         #arcpy.AddMessage("{0}, {1}, {2}".format(inFC, density, fieldObjects)) #For debug
 
-        #Convert field objects to strings of their names
+        # convert field objects to strings of their names
         fieldsToKeep = []
         if not fieldObjects is None:
             for f in fieldObjects:
-                fieldsToKeep.append(str([f[0]), "FIRST"])
-                arcpy.AddMessage(f[0])
-            
+                fieldsToKeep.append([str(f[0]), "FIRST"])   
             arcpy.AddMessage("The fields to keep are: {0}.".format(fieldsToKeep))
         else:
             arcpy.AddMessage("No fields will be retained.")
 
-        #Densify street lines
+        # densify street lines
         arcpy.AddMessage("Densifying the street centerlines...")
         arcpy.AddMessage(inFC)
         arcpy.AddMessage(os.path.join(intermediateworkspace, "streets"))
         streetsinmemory = arcpy.CopyFeatures_management(inFC, os.path.join(intermediateworkspace, "streets"))
-        streetsinmemory = arcpy.MakeFeatureLayer_management(streetsinmemory, os.path.join(intermediateworkspace, "tstreets"))
+        streetsinmemory = arcpy.MakeFeatureLayer_management(streetsinmemory,
+                                                            os.path.join(intermediateworkspace, "tstreets"))
         streetsinmemory = arcpy.Densify_edit(streetsinmemory, "DISTANCE", density)
 
-        #Convert vertices to points; erase endpoints
+        # convert vertices to points; erase endpoints
         arcpy.AddMessage("Extracting the street vertices to points...")
-        points = arcpy.FeatureVerticesToPoints_management(streetsinmemory, os.path.join(intermediateworkspace, "points"), "ALL")
-        endpoints = arcpy.FeatureVerticesToPoints_management(streetsinmemory, os.path.join(intermediateworkspace, "endpoints"), "BOTH_ENDS")
+        points = arcpy.FeatureVerticesToPoints_management(streetsinmemory,
+                                                          os.path.join(intermediateworkspace, "points"),
+                                                          "ALL")
+        endpoints = arcpy.FeatureVerticesToPoints_management(streetsinmemory,
+                                                             os.path.join(intermediateworkspace, "endpoints"),
+                                                             "BOTH_ENDS")
 
         if intermediateworkspace == "in_memory":
             arcpy.AddMessage("Freeing some memory...")
@@ -224,7 +231,7 @@ class VoronoiAllocationForLines(object):
             arcpy.Delete_management("in_memory/points")
             arcpy.Delete_management("in_memory/endpoints")
 
-        #Allocate points then dissolve on FID
+        # allocate points then dissolve on FID
         arcpy.AddMessage("Creating Thiessen polygons for the extracted points...")
         polygons = arcpy.CreateThiessenPolygons_analysis(points, os.path.join(intermediateworkspace, "thiessen"), "ALL")
 
@@ -247,10 +254,10 @@ class CleanUpTaxLots(object):
         self.canRunInBackground = True
 
     def getParameterInfo(self):
-        #Define parameter definitions
+        # define parameter definitions
         params = []
 
-        #First Parameter
+        # first parameter
         param0 = arcpy.Parameter(
         displayName="Input Tax Lot (Parcel) Features",
         name="in_taxlots",
@@ -261,7 +268,7 @@ class CleanUpTaxLots(object):
         param0.filter.list = ["Polygon"]
         params.append(param0)
 
-        #Second Parameter
+        # second parameter
         param1 = arcpy.Parameter(
             displayName="Street Features",
             name="in_streets",
@@ -272,7 +279,7 @@ class CleanUpTaxLots(object):
         param1.filter.list = ["Polyline"]
         params.append(param1)
 
-        #Thrid Parameter
+        # thrid parameter
         param2 = arcpy.Parameter(
             displayName="Building Features",
             name="in_buildings",
@@ -283,7 +290,7 @@ class CleanUpTaxLots(object):
         param2.filter.list = ["Polygon"]
         params.append(param2)
 
-        #Fourth Parameter
+        # fourth parameter
         param3 = arcpy.Parameter(
             displayName="Output Feature Class",
             name="out_FC",
@@ -294,7 +301,7 @@ class CleanUpTaxLots(object):
         param3.parameterDependencies = [param0.name]
         params.append(param3)
 
-        #Fifth Parameter
+        # fifth parameter
         param4 = arcpy.Parameter(
             displayName="Street Buffer Distance",
             name="buffDist",
@@ -340,29 +347,28 @@ class CleanUpTaxLots(object):
         streetslayer = arcpy.MakeFeatureLayer_management(streets, "tstreets")
         buildingslayer = arcpy.MakeFeatureLayer_management(buildings, "tbuildings")
 
-        arcpy.AddMessage("Selecting taxlots by intersections of taxlots and streets...")
-        arcpy.SelectLayerByLocation_management(taxlotlayer, "INTERSECT", streetslayer)
-        intersectionswithstreets = int(arcpy.GetCount_management(taxlotlayer).getOutput(0))
+        taxlotcount = int(arcpy.GetCount_management(taxlotlayer).getOutput(0))
 
-        if intersectionswithstreets != 0:
-            arcpy.SelectLayerByLocation_management(streetslayer, "INTERSECT", taxlotlayer)
-
-        arcpy.AddMessage("Removing intersections of taxlots and buildings from previous selection...")
-        arcpy.SelectLayerByLocation_management(taxlotlayer, "INTERSECT", buildingslayer, "", "REMOVE_FROM_SELECTION")
-        intersectionswithbuildings = int(arcpy.GetCount_management(taxlotlayer).getOutput(0))
+        arcpy.AddMessage("Selecting taxlots without buildings...")
+        arcpy.SelectLayerByLocation_management(taxlotlayer, "INTERSECT", buildingslayer)
+        taxlotswithoutbuildings = taxlotcount - int(arcpy.GetCount_management(taxlotlayer).getOutput(0))
         del buildingslayer
 
-        if intersectionswithbuildings != 0:
-            arcpy.AddMessage("Found taxlot polygons intersecting streets with no buildings. Removing them...")
-            arcpy.SelectLayerByAttribute_management(taxlotlayer, "SWITCH_SELECTION")
+        if taxlotswithoutbuildings:
+            arcpy.AddMessage("Found taxlot polygons with no buildings. Removing them...")
             taxlotlayer = arcpy.CopyFeatures_management(taxlotlayer, "in_memory/seltaxlots")
         else:
-            arcpy.AddMessage("No taxlots are intersected by streets and do not have buildings.")
+            arcpy.AddMessage("All taxlots have buildings.")
             arcpy.SelectLayerByAttribute_management(taxlotlayer, "CLEAR_SELECTION")
 
-        if intersectionswithstreets != 0:
-            arcpy.AddMessage("Erasing a buffer around the streets from the taxlots...")
-            streetbuffer = arcpy.Buffer_analysis(streetslayer, "in_memory/streetbuffer", bufferdist, "FULL", "ROUND", "NONE")
+        arcpy.AddMessage("Find any occurances of streets intersecting taxlots...")
+        arcpy.SelectLayerByLocation_management(streetslayer, "INTERSECT", taxlotlayer)
+        intersectionswithstreets = int(arcpy.GetCount_management(streetslayer).getOutput(0))
+
+        if intersectionswithstreets:
+            arcpy.AddMessage("Erasing a buffer around streets instersecting taxlots...")
+            streetbuffer = arcpy.Buffer_analysis(streetslayer, "in_memory/streetbuffer", bufferdist,
+                                                 "FULL", "ROUND", "NONE")
             taxlotlayer = arcpy.Erase_analysis(taxlotlayer, streetbuffer, "in_memory/taxlotserased")
             arcpy.Delete_management(streetbuffer)
         else:
@@ -383,10 +389,10 @@ class CreateRightOfWayPolygon(object):
         self.canRunInBackground = True
 
     def getParameterInfo(self):
-        #Define parameter definitions
+        # define parameter definitions
         params = []
 
-        #First Parameter
+        # first parameter
         param0 = arcpy.Parameter(
         displayName="Cleaned Tax Lot (Parcel) Features",
         name="in_taxlots",
@@ -397,7 +403,7 @@ class CreateRightOfWayPolygon(object):
         param0.filter.list = ["Polygon"]
         params.append(param0)
 
-        #Second Parameter
+        # second parameter
         param1 = arcpy.Parameter(
             displayName="Output Feature Class",
             name="out_FC",
@@ -408,7 +414,7 @@ class CreateRightOfWayPolygon(object):
         param1.parameterDependencies = [param0.name]
         params.append(param1)
 
-        #Third Parameter
+        # third parameter
         param2 = arcpy.Parameter(
             displayName="Scaling Factor",
             name="scalefactor",
@@ -477,10 +483,10 @@ class CrackTaxlotPolygons(object):
         self.canRunInBackground = True
 
     def getParameterInfo(self):
-        #Define parameter definitions
+        # define parameter definitions
         params = []
 
-        #First Parameter
+        # first parameter
         param0 = arcpy.Parameter(
         displayName="Cleaned Tax Lot (Parcel) Features",
         name="in_taxlots",
@@ -491,7 +497,7 @@ class CrackTaxlotPolygons(object):
         param0.filter.list = ["Polygon"]
         params.append(param0)
 
-        #Second Parameter
+        # second parameter
         param1 = arcpy.Parameter(
             displayName="Right-of-Way Polygon",
             name="in_row",
@@ -502,7 +508,7 @@ class CrackTaxlotPolygons(object):
         param1.filter.list = ["Polygon"]
         params.append(param1)
 
-        #Thrid Parameter
+        # third parameter
         param2 = arcpy.Parameter(
             displayName="Street Allocation Polygons",
             name="in_allocation",
@@ -513,7 +519,7 @@ class CrackTaxlotPolygons(object):
         param2.filter.list = ["Polygon"]
         params.append(param2)
 
-        #Fourth Parameter
+        # fourth parameter
         param3 = arcpy.Parameter(
             displayName="Output Feature Class",
             name="out_FC",
@@ -584,7 +590,7 @@ class FindUncoveredBuildings(object):
 
         params = []
 
-        #0
+        # 0
         taxlots = arcpy.Parameter(
             displayName="Cracked Tax Lot (Parcel) Polyline Features",
             name="in_taxlots",
@@ -594,7 +600,7 @@ class FindUncoveredBuildings(object):
         taxlots.filter.list = ["Polyline"]
         params.append(taxlots)
 
-        #1
+        # 1
         taxlotIDfield = arcpy.Parameter(
             displayName="Tax Lot Identifer Field",
             name="tlid",
@@ -604,7 +610,7 @@ class FindUncoveredBuildings(object):
         taxlotIDfield.parameterDependencies = [taxlots.name]
         params.append(taxlotIDfield)
 
-        #2
+        # 2
         hydrants = arcpy.Parameter(
             displayName="Hydrant Point Features",
             name="in_hydrants",
@@ -614,7 +620,7 @@ class FindUncoveredBuildings(object):
         hydrants.filter.list = ["Point"]
         params.append(hydrants)
 
-        #3
+        # 3
         buildings = arcpy.Parameter(
             displayName="Building Features",
             name="in_buildings",
@@ -624,7 +630,7 @@ class FindUncoveredBuildings(object):
         buildings.filter.list = ["Polygon"]
         params.append(buildings)
 
-        #4
+        # 4
         buildingTLIDfield = arcpy.Parameter(
             displayName="Tax Lot Identifer Field in Buildings Feature Class",
             name="buildingtlid",
@@ -634,7 +640,7 @@ class FindUncoveredBuildings(object):
         buildingTLIDfield.parameterDependencies = [buildings.name]
         params.append(buildingTLIDfield)
 
-        #5
+        # 5
         streetlines = arcpy.Parameter(
             displayName="Street Centerlines",
             name="in_streets",
@@ -644,7 +650,7 @@ class FindUncoveredBuildings(object):
         streetlines.filter.list = ["Polyline"]
         params.append(streetlines)
 
-        #6
+        # 6
         streetND = arcpy.Parameter(
             displayName="Street Network Dataset",
             name="in_streetND",
@@ -653,7 +659,7 @@ class FindUncoveredBuildings(object):
             direction="Input")
         params.append(streetND)
 
-        #7
+        # 7
         buffDist = arcpy.Parameter(
             displayName="Hydrant Buffer/Service Area Length (in units from the hydrant feature class)",
             name="buffDist",
@@ -662,7 +668,7 @@ class FindUncoveredBuildings(object):
             direction="Input")
         params.append(buffDist)
 
-        #8
+        # 8
         serviceAreaWidth = arcpy.Parameter(
             displayName="Hydrant Service Area Width (in units from the hydrant feature class)",
             name="serviceAreaWidth",
@@ -671,7 +677,7 @@ class FindUncoveredBuildings(object):
             direction="Input")
         params.append(serviceAreaWidth)
 
-        #9
+        # 9
         accessModel = arcpy.Parameter(
             displayName="Model Access to Front of Tax Lots Only",
             name="accessModel",
@@ -681,7 +687,7 @@ class FindUncoveredBuildings(object):
         accessModel.value = True
         params.append(accessModel)
 
-        #10
+        # 10
         taxlotstreetfield = arcpy.Parameter(
             displayName="Tax Lot Address Street Name Field",
             name="tlstreet",
@@ -692,7 +698,7 @@ class FindUncoveredBuildings(object):
         taxlotstreetfield.parameterDependencies = [taxlots.name]
         params.append(taxlotstreetfield)
 
-        #11
+        # 11
         allocationstreetfield = arcpy.Parameter(
             displayName="Allocation Street Name Field",
             name="allocationstreet",
@@ -703,7 +709,7 @@ class FindUncoveredBuildings(object):
         allocationstreetfield.parameterDependencies = [taxlots.name]
         params.append(allocationstreetfield)
 
-        #12
+        # 12
         thresh = arcpy.Parameter(
             displayName="Use Distance Threshold",
             name="thresh",
@@ -713,7 +719,7 @@ class FindUncoveredBuildings(object):
         thresh.value = False
         params.append(thresh)
 
-        #13
+        # 13
         threshDist = arcpy.Parameter(
             displayName="Threshold Distance (in units from the hydrant feature class)",
             name="threshDist",
@@ -723,7 +729,7 @@ class FindUncoveredBuildings(object):
         threshDist.parameterDependencies = [thresh.name]
         params.append(threshDist)
 
-        #14
+        # 14
         flags = arcpy.Parameter(
             displayName="Use Distance Flags",
             name="flags",
@@ -733,7 +739,7 @@ class FindUncoveredBuildings(object):
         flags.value = False
         params.append(flags)
 
-        #15
+        # 15
         flagDist = arcpy.Parameter(
             displayName="Flag Distance (in units from the hydrant feature class)",
             name="flagDist",
@@ -743,7 +749,7 @@ class FindUncoveredBuildings(object):
         flagDist.parameterDependencies = [flags.name]
         params.append(flagDist)
 
-        #16
+        # 16
         outputWorkspace = arcpy.Parameter(
             displayName="Output Workspace",
             name="out_workspace",
@@ -752,7 +758,7 @@ class FindUncoveredBuildings(object):
             direction="Output")
         params.append(outputWorkspace)
 
-        #17
+        # 17
         uncoveredName = arcpy.Parameter(
             displayName="Name for Uncovered Buildings Feature Class",
             name="uncoveredName",
@@ -763,7 +769,18 @@ class FindUncoveredBuildings(object):
         uncoveredName.parameterDependencies = [buffDist.name]
         params.append(uncoveredName)
 
-        #18
+        # 18
+        coveredName = arcpy.Parameter(
+            displayName="Name for Covered Buildings Feature Class",
+            name="coveredName",
+            datatype="GPString",
+            parameterType="Required",
+            direction="Output")
+        coveredName.value = "coveredBuildings_dist"
+        coveredName.parameterDependencies = [buffDist.name]
+        params.append(coveredName)
+
+        # 19
         bufferName = arcpy.Parameter(
             displayName="Name for Hydrant Buffers Feature Class",
             name="bufferName",
@@ -774,7 +791,7 @@ class FindUncoveredBuildings(object):
         bufferName.parameterDependencies = [buffDist.name]
         params.append(bufferName)
 
-        #19
+        # 20
         serviceLineName = arcpy.Parameter(
             displayName="Name for Hydrant Service Lines Feature Class",
             name="serviceLineName",
@@ -785,7 +802,7 @@ class FindUncoveredBuildings(object):
         serviceLineName.parameterDependencies = [buffDist.name]
         params.append(serviceLineName)
 
-        #20
+        # 21
         serviceAreaName = arcpy.Parameter(
             displayName="Name for Hydrant Service Areas Feature Class",
             name="serviceAreaName",
@@ -796,7 +813,7 @@ class FindUncoveredBuildings(object):
         serviceAreaName.parameterDependencies = [buffDist.name]
         params.append(serviceAreaName)
 
-        #21
+        # 22
         hydrantCoverageName = arcpy.Parameter(
             displayName="Name for Hydrant Coverage Count Table",
             name="hydrantCoverageName",
@@ -818,15 +835,16 @@ class FindUncoveredBuildings(object):
         validation is performed.  This method is called whenever a parameter
         has been changed."""
 
-        #Fix units to hydrants FC
+        # fix units to hydrants FC
         if parameters[7].value:
             parameters[17].value = "uncoveredBuildings_" + str(int(parameters[7].value))
-            parameters[18].value = "buffers_" + str(int(parameters[7].value))
-            parameters[19].value = "serviceLines_" + str(int(parameters[7].value))
-            parameters[20].value = "serviceAreas_" + str(int(parameters[7].value))
-            parameters[21].value = "hydrantCoverage_" + str(int(parameters[7].value))
+            parameters[18].value = "coveredBuildings_" + str(int(parameters[7].value))
+            parameters[19].value = "buffers_" + str(int(parameters[7].value))
+            parameters[20].value = "serviceLines_" + str(int(parameters[7].value))
+            parameters[21].value = "serviceAreas_" + str(int(parameters[7].value))
+            parameters[22].value = "hydrantCoverage_" + str(int(parameters[7].value))
 
-        #Enable/disable address field parameters
+        # enable/disable address field parameters
         if parameters[9].value:
             parameters[10].enabled = True  #Enable field
             parameters[11].enabled = True  #Enable field
@@ -834,13 +852,13 @@ class FindUncoveredBuildings(object):
             parameters[10].enabled = False  #Disable field
             parameters[11].enabled = False  #Disable field
 
-        #Enable/disable thresh dist parameter
+        # enable/disable thresh dist parameter
         if parameters[12].value:
             parameters[13].enabled = True  #Enable field
         else:
             parameters[13].enabled = False  #Disable field
 
-        #Enable/disable flag dist parameter
+        # enable/disable flag dist parameter
         if parameters[14].value:
             parameters[15].enabled = True  #Enable field
         else:
@@ -852,19 +870,19 @@ class FindUncoveredBuildings(object):
         """Modify the messages created by internal validation for each tool
         parameter.  This method is called after internal validation."""
 
-        #Error message for missing address fields
+        # error message for missing address fields
         if parameters[9].value:
             if not parameters[10].value:
                 parameters[10].setErrorMessage("If modeling access to front only, then this parameter is required.")
             if not parameters[11].value:
                 parameters[11].setErrorMessage("If modeling access to front only, then this parameter is required.")
 
-        #Error message for missing threshold dist
+        # error message for missing threshold dist
         if parameters[12].value:
             if not parameters[13].value:
                 parameters[13].setErrorMessage("If using a threshold, then this parameter is required.")
 
-        #Error message for missing flag dist
+        # error message for missing flag dist
         if parameters[14].value:
             if not parameters[15].value:
                 parameters[15].setErrorMessage("If using a flag, then this parameter is required.")
@@ -874,38 +892,43 @@ class FindUncoveredBuildings(object):
     def execute(self, parameters, messages):
         """The source code of the tool."""
 
+        from collections import Counter
+
         #################################
         #      Get Tool Parameters      #
         #################################
 
-        taxlots = parameters[0].valueAsText
-        taxlotID = parameters[1].valueAsText
-        hydrants = parameters[2].valueAsText
-        buildings = parameters[3].valueAsText
-        buildingTLID = parameters[4].valueAsText
-        streets = parameters[5].valueAsText
-        streetsND = parameters[6].valueAsText
-        buffDist = parameters[7].value
-        serviceAreaWidth = parameters[8].value
-        accessModel = parameters[9].value
-        taxlotstreetfield = parameters[10].valueAsText
+        taxlots             = parameters[0].valueAsText
+        taxlotID            = parameters[1].valueAsText
+        hydrants            = parameters[2].valueAsText
+        buildings           = parameters[3].valueAsText
+        buildingTLID        = parameters[4].valueAsText
+        streets             = parameters[5].valueAsText
+        streetsND           = parameters[6].valueAsText
+        buffDist            = parameters[7].value
+        serviceAreaWidth    = parameters[8].value
+        accessModel         = parameters[9].value
+        taxlotstreetfield   = parameters[10].valueAsText
         allocationstreetfield = parameters[11].valueAsText
-        thresh = parameters[12].value
-        threshDist = parameters[13].value
-        flags= parameters[14].value
-        flagDist = parameters[15].value
-        outputWorkspace = parameters[16].valueAsText
-        uncoveredName = parameters[17].valueAsText
-        bufferName = parameters[18].valueAsText
-        serviceLineName = parameters[19].valueAsText
-        serviceAreaName = parameters[20].valueAsText
-        hydrantTableName = parameters[21].valueAsText
+        thresh              = parameters[12].value
+        threshDist          = parameters[13].value
+        flags               = parameters[14].value
+        flagDist            = parameters[15].value
+        outputWorkspace     = parameters[16].valueAsText
+        uncoveredName       = parameters[17].valueAsText
+        coveredName         = parameters[18].valueAsText
+        bufferName          = parameters[19].valueAsText
+        serviceLineName     = parameters[20].valueAsText
+        serviceAreaName     = parameters[21].valueAsText
+        hydrantTableName    = parameters[22].valueAsText
 
         fieldstokeep = ["OBJECTID", "CoveredCount", "NEAR_DIST", "FLAGGED"]
         bufferIDfieldname = "HydrantFID"
+        serviceareaIDfieldname = "FacilityID"
+        hydrantcoveredcountfield = "CoveredCount"
         ################################
 
-        #Try to create output workspace if it does not exist
+        # try to create output workspace if it does not exist
         if not arcpy.Exists(outputWorkspace):
 
             if not os.path.basename(outputWorkspace).endswith(".gdb"):
@@ -916,19 +939,21 @@ class FindUncoveredBuildings(object):
 
             arcpy.CreateFileGDB_management(os.path.dirname(outputWorkspace), outputGDBName)
 
-        #Copy input hydrants to memory
+        # copy input hydrants to memory
         hydrants = arcpy.CopyFeatures_management(hydrants, "in_memory/hydrants")
 
-        #Set a threshold for Near
+        # set a threshold for Near
         if thresh:
             threshDist = threshDist
         else:
             threshDist = buffDist
 
-        #Calc Near
+        # calc Near
+        arcpy.AddMessage("Finding hydrant distances...")
         arcpy.Near_analysis(hydrants, streets, threshDist)
 
-        #Set breaks for service lines
+        # set breaks for service lines
+        arcpy.AddMessage("Calculating hydrant breaks...")
         breaksname = "Breaks"
         nearfield = "NEAR_DIST"
 
@@ -947,9 +972,10 @@ class FindUncoveredBuildings(object):
 
         del cursor
 
-        #Add flags if enabled
+        # add flags if enabled
         flagsname = "FLAGGED"
         if flags:
+            arcpy.AddMessage("Adding hydrant flags...")
             arcpy.AddField_management(hydrants, flagsname, "SHORT", "", "", "", "", "NULLABLE", "NON_REQUIRED", "")
 
             cursor = arcpy.UpdateCursor(hydrants)
@@ -965,54 +991,92 @@ class FindUncoveredBuildings(object):
 
             del cursor
 
-        #Buffer hydrants and create a hydrant FID field for later selections
-        buffers = arcpy.Buffer_analysis(hydrants, os.path.join(outputWorkspace, bufferName), str(buffDist) + " FEET", "FULL", "ROUND", "NONE", "")
+        # buffer hydrants and create a hydrant FID field for later selections
+        arcpy.AddMessage("Buffering hydrant features...")
+        buffers = arcpy.Buffer_analysis(hydrants, os.path.join(outputWorkspace, bufferName),
+                                        str(buffDist) + " FEET", "FULL", "ROUND", "NONE", "")
         create_join_oid(buffers, bufferIDfieldname) #Needed in versions < 10.2
 
-        #Make hydrant service lines
+        # make hydrant service lines
         #serviceLines = make_service_lines(streetsND, hydrants, "in_memory/servicelines")
         serviceLines = make_service_lines(streetsND, hydrants, os.path.join(outputWorkspace, serviceLineName))
 
-        #Make hydrant service areas
-        serviceAreas = make_service_areas(serviceLines, hydrants, os.path.join(outputWorkspace, serviceAreaName))
+        # make hydrant service areas
+        serviceAreas = make_service_areas(serviceLines, hydrants,
+                                          os.path.join(outputWorkspace, serviceAreaName), serviceAreaWidth)
 
-        #Clean up temp service lines
+        # clean up temp service lines
         #arcpy.Delete_management(serviceLines)
 
-        #Make tax lot lines a feature layer; select where street matches allocation street if accessModel = True
+        # make tax lot lines a feature layer
+        # select where street matches allocation street if accessModel = True
         if accessModel:
             selection = taxlotstreetfield + " = " + allocationstreetfield
         else:
             selection = ""
-        print
+
+        # blank line
+        arcpy.AddMessage("")
+        
         taxlotLayer = arcpy.MakeFeatureLayer_management(taxlots, "ttaxlots", selection)
 
-        #Join service areas with tax lot lines
-        #DO NOT write join1 to in_memory as it needs to be in the same workspace as the buildings for make query table
-        join1temp = arcpy.SpatialJoin_analysis(taxlotLayer, serviceAreas, "in_memory/join1", "JOIN_ONE_TO_MANY")
-        join1 = arcpy.CopyRows_management(join1temp, os.path.join(outputWorkspace, "join1"))
-        arcpy.Delete_management(join1temp)
+        # join service areas with tax lot lines
+        arcpy.AddMessage("Joining service areas to tax lot lines...")
+        tls_to_sas_join = arcpy.SpatialJoin_analysis(taxlotLayer, serviceAreas, os.path.join("in_memory", "join1"), "JOIN_ONE_TO_MANY")
 
-        #Make query table between join 1 and buildings
-        buildings = arcpy.CopyFeatures_management(buildings, os.path.join(outputWorkspace, uncoveredName)) #Copies to same workspace for query table
-        selection = "join1." + taxlotID + " = " + uncoveredName + "." + buildingTLID #build select statement
-        join2 = arcpy.MakeQueryTable_management([join1, buildings], "join2_querytable", "ADD_VIRTUAL_KEY_FIELD", "", "", selection)
-        #arcpy.CopyFeatures_management(join2, os.path.join(outputWorkspace, "join2")) #for testing
+        serviceAreaCoverage = set()
+        with arcpy.da.SearchCursor(tls_to_sas_join, [taxlotID, serviceareaIDfieldname]) as cursor:
+            for row in cursor:
+                if not row[1] is None:
+                    serviceAreaCoverage.add((row[0], row[1]))  # TLID, FacilityID
 
-        #Join with buffers and select where buffer and service are of the same hydrant
-        join3 = arcpy.SpatialJoin_analysis(join2, buffers, os.path.join("in_memory", "join3"), "JOIN_ONE_TO_MANY", "KEEP_ALL", "", "WITHIN")
-        tJoin = arcpy.MakeFeatureLayer_management(join3, "tjoin3", "join1_FacilityID = " + bufferIDfieldname)
-        arcpy.Delete_management(join1) #Comment out to save join1
+        # join buildings with buffers
+        arcpy.AddMessage("Joining buildings with buffers...")
+        # copy buildings to same workspace for query table; used for uncovered building result
+        uncoveredbuildings = arcpy.CopyFeatures_management(buildings, os.path.join(outputWorkspace, uncoveredName))
+        bldgs_to_buffs_join = arcpy.SpatialJoin_analysis(uncoveredbuildings, buffers, os.path.join("in_memory", "join2"),
+                                                         "JOIN_ONE_TO_MANY", "KEEP_COMMON", "", "WITHIN")
 
-        #Select buildings from the buildings layer that are covered and delete
-        buildingslayer = arcpy.MakeFeatureLayer_management(buildings, "tbuildings")
-        uncovered = arcpy.SelectLayerByLocation_management(buildingslayer, "ARE_IDENTICAL_TO", tJoin)
-        arcpy.DeleteFeatures_management(uncovered)
+        buildingsInBuffers = []
+        with arcpy.da.SearchCursor(bldgs_to_buffs_join, ["TARGET_FID", buildingTLID, bufferIDfieldname]) as cursor:
+            for row in cursor:
+                buildingsInBuffers.append((row[0], row[1], row[2]))  # Building OBJECTID, TLID, HydrantFID
 
-        #Count covered buildings
-        count_covered_buildings(hydrants, tJoin, "CoveredCount", [uncoveredName + "_BLDG_ID", bufferIDfieldname])
+        # try to get some memory back
+        arcpy.Delete_management(bldgs_to_buffs_join)
+        arcpy.Delete_management(tls_to_sas_join)
+
+        # select buildings from the buildings layer that are covered and delete
+        arcpy.AddMessage("Finding covered buildings...")
+
+        # find hydrant building counts and covered building IDs
+        hydrantsbuildings = [(b[0], b[2]) for b in buildingsInBuffers if (b[1], b[2]) in serviceAreaCoverage]  # building ID, hydrant ID for building in buffer coverage if also in service area coverage
+
+        coveredBuildingIDs = set([h[0] for h in hydrantsbuildings])  # these are the unique covered building IDs
+        arcpy.AddMessage("Found {} uncovered buildings. Creating uncovered buildings FC...".format(len(coveredBuildingIDs)))
+        
+        # delete covered
+        with arcpy.da.UpdateCursor(uncoveredbuildings, ["OBJECTID"]) as cursor:
+            for row in cursor:
+                if row[0] in coveredBuildingIDs:
+                    cursor.deleteRow()
+
+        # add covered building counts
+        arcpy.AddMessage("Calculating hydrant statistics...")
+        hydrantcountlist = [h[1] for h in set(hydrantsbuildings)]  # make list of unique occurances of building, hydrant pair, keeping just hydrant ID; h[1] is buffer OID == hydrant ID
+        hydrantcount = Counter(hydrantcountlist)  # creates dict with hydrant ID as key and count of occurances as value
+        arcpy.AddField_management(hydrants, hydrantcoveredcountfield, "SHORT", "", "", "", "", "NULLABLE", "NON_REQUIRED", "")
+        with arcpy.da.UpdateCursor(hydrants, ["OBJECTID", hydrantcoveredcountfield]) as update:
+            for row in update:
+                try:
+                    row[1] = hydrantcount[row[0]]
+                except KeyError:
+                    row[1] = 0
+                update.updateRow(row)
+
         hydrantTable = arcpy.CopyRows_management(hydrants, os.path.join(outputWorkspace, hydrantTableName))
 
+        arcpy.AddMessage("Removing unnecessary fields from hydrant data table...")
         fields = arcpy.ListFields(hydrantTable)
 
         for field in fields:
@@ -1036,7 +1100,9 @@ def make_service_lines(StreetNetwork, Hydrants, outputFC):
       raise LicenseError
 
     arcpy.AddMessage("\nGenerating service lines...")
-    lineGen = arcpy.MakeServiceAreaLayer_na(StreetNetwork, "ServiceLines22_", "Length", "TRAVEL_FROM", "1", "NO_POLYS", "", "", "TRUE_LINES", "OVERLAP", "NO_SPLIT")
+    lineGen = arcpy.MakeServiceAreaLayer_na(StreetNetwork, "ServiceLines22_", "Length",
+                                            "TRAVEL_FROM", "1", "NO_POLYS", "", "", "TRUE_LINES",
+                                            "OVERLAP", "NO_SPLIT")
     arcpy.AddLocations_na(lineGen, "Facilities", Hydrants, "", "")
     arcpy.Solve_na(lineGen)
     ServiceLines = arcpy.Select_analysis(str(lineGen) + "\Lines", outputFC)
@@ -1054,7 +1120,8 @@ def make_service_lines(StreetNetwork, Hydrants, outputFC):
 
   return ServiceLines
 
-def make_service_areas(ServiceLines, Hydrants, outputFC):
+
+def make_service_areas(ServiceLines, Hydrants, outputFC, serviceareawidth):
   ServiceAreas = None
   arcpy.AddMessage("\nMaking service areas from service lines...")
   try:
@@ -1072,7 +1139,7 @@ def make_service_areas(ServiceLines, Hydrants, outputFC):
 
     try:
       arcpy.AddMessage("  Buffering service lines...")
-      buffTemp = arcpy.Buffer_analysis(linesLyr, "in_memory/buffTemp", "100 Feet", "FULL", "ROUND")
+      buffTemp = arcpy.Buffer_analysis(linesLyr, "in_memory/buffTemp", serviceareawidth, "FULL", "ROUND")
       arcpy.AddMessage("  Dissolving Buffers...")
       ServiceAreas = arcpy.Dissolve_management(buffTemp, outputFC, "FacilityID", "", "SINGLE_PART")
       arcpy.AddMessage("  Deleting intermediate features...")
@@ -1085,25 +1152,6 @@ def make_service_areas(ServiceLines, Hydrants, outputFC):
 
   return ServiceAreas
 
-def count_covered_buildings(hydrants, lyr, newfield, fieldstoget):
-
-    arcpy.AddField_management(hydrants, newfield, "SHORT", "", "", "", "", "NULLABLE", "NON_REQUIRED", "")
-
-    hyCountList = [(row[0], row[1]) for row in arcpy.da.SearchCursor(lyr, fieldstoget)]
-
-    hyCountSet = set(hyCountList)
-    hyCountList_unique = list(h[1] for h in hyCountSet)
-    #print "    {0}".format(len(hyCountList_unique)) #for debug
-
-    hyCount = dict((i, hyCountList_unique.count(i)) for i in hyCountList_unique) #make
-
-    with arcpy.da.UpdateCursor(hydrants, ["OBJECTID", newfield]) as update:
-      for row in update:
-        if row[0] in hyCount.keys():
-          row[1] = hyCount[row[0]]
-        else:
-          row[1] = 0
-        update.updateRow(row)
 
 def create_join_oid(Buffers, fieldname):
     arcpy.AddField_management(Buffers, fieldname, "LONG")
@@ -1113,5 +1161,4 @@ def create_join_oid(Buffers, fieldname):
     for row in cursor:
       row.setValue(fieldname, row.getValue("OBJECTID"))
       cursor.updateRow(row)
-    arcpy.AddMessage("  Data is ready.")
     del cursor
